@@ -418,6 +418,19 @@ export interface AppSettings {
   receivePreviewUpdates?: boolean;
   /** 设置页/更新弹窗“以后自动下载并安装更新”偏好；仅桌面端自动更新读取。 */
   autoDownloadAndInstallUpdates?: boolean;
+  /**
+   * 提示词增强总开关，桌面端本地偏好。关闭时输入框不渲染入口，
+   * 也不读取下面的模型配置，避免未配置用户被入口打扰。
+   */
+  promptEnhanceEnabled?: boolean;
+  /** 提示词增强使用的模型；必须由用户显式选择，不跟随对话模型。 */
+  promptEnhanceModel?: {
+    providerId: string;
+    modelId: string;
+    options?: { reasoningLevel?: string };
+  };
+  /** 提示词增强的最大输出 token，未配置时按 5000 执行。 */
+  promptEnhanceMaxOutputTokens?: number;
   /** 用户跳过的 Electron 自动更新版本；按通道隔离，避免 stable / preview 互相遮挡。 */
   skippedElectronUpdateVersions?: Partial<Record<ElectronReleaseChannel, string>>;
   /** 首次启动设置同步提示是否已消费；只表示弹窗不再出现，不代表导入成功。 */

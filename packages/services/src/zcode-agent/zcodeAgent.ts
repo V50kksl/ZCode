@@ -348,13 +348,23 @@ export interface ZCodeAgentGenerateWorkspaceTextParams extends ZCodeAgentWorkspa
   tools?: ZCodeWorkspaceGenerateTextParams["tools"];
   querySource: string;
   maxOutputTokens?: number;
+  /**
+   * 仅进程内调用可用。renderer 经服务代理调用时 AbortSignal 无法序列化，
+   * 必须改用 `operationId` + `cancelGenerateWorkspaceText`。
+   */
   signal?: AbortSignal;
+  /** 调用方生成的取消标识；跨进程调用方用它配合 `cancelGenerateWorkspaceText` 取消。 */
+  operationId?: string;
   /**
    * 协议层 RPC 超时。thinking 模型的长请求会超过协议 client 默认的
    * 3 分钟；调用方必须把自身 deadline 透传到这里，否则默认超时先触发、
    * 还会被 onRequestTimeout 误判 stale 杀进程。
    */
   requestTimeoutMs?: number;
+}
+
+export interface ZCodeAgentCancelGenerateWorkspaceTextParams extends ZCodeAgentWorkspaceTarget {
+  operationId: string;
 }
 
 export interface ZCodeAgentTestModelConnectivityParams extends ZCodeAgentWorkspaceTarget {
@@ -811,6 +821,11 @@ export interface IZCodeAgentService {
   generateWorkspaceText(
     params: ZCodeAgentGenerateWorkspaceTextParams,
   ): Promise<ZCodeWorkspaceGenerateTextResult>;
+  /**
+   * 取消一次进行中的 workspace 生成。renderer 无法跨进程传 AbortSignal，
+   * 只能用发起时给出的 operationId 主动取消。
+   */
+  cancelGenerateWorkspaceText(params: ZCodeAgentCancelGenerateWorkspaceTextParams): Promise<void>;
   testModelConnectivity(
     params: ZCodeAgentTestModelConnectivityParams,
   ): Promise<ZCodeProviderTestModelConnectivityResult>;

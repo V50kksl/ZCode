@@ -463,4 +463,31 @@ describe("远程介绍回滚兼容", () => {
       false,
     );
   });
+
+  it("提示词增强默认关闭、输出上限默认 5000，补丁可写入显式档位", () => {
+    const defaults = appSettingsSchema.parse({});
+    expect(defaults.promptEnhanceEnabled).toBe(false);
+    expect(defaults.promptEnhanceMaxOutputTokens).toBe(5000);
+    expect(defaults.promptEnhanceModel).toBeUndefined();
+
+    const patched = appSettingsSchema.parse({
+      ...defaults,
+      ...appSettingsPatchSchema.parse({
+        promptEnhanceEnabled: true,
+        promptEnhanceModel: {
+          providerId: "zcode",
+          modelId: "glm-4.6",
+          options: { reasoningLevel: "high" },
+        },
+        promptEnhanceMaxOutputTokens: 2048,
+      }),
+    });
+    expect(patched.promptEnhanceEnabled).toBe(true);
+    expect(patched.promptEnhanceModel?.options?.reasoningLevel).toBe("high");
+    expect(patched.promptEnhanceMaxOutputTokens).toBe(2048);
+
+    expect(appSettingsPatchSchema.safeParse({ promptEnhanceMaxOutputTokens: 0 }).success).toBe(
+      false,
+    );
+  });
 });

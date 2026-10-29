@@ -3745,6 +3745,26 @@ const enUS: Record<string, string> = {
   "settings.plugins.toggle.failed": "Couldn't update {plugin}. Try again.",
   "settings.modelProviderDescription":
     "Manage custom model providers. Once configured, they can be selected during chat.",
+  "settings.promptEnhance.navLabel": "Prompt enhance",
+  "settings.promptEnhance.title": "Prompt enhance",
+  "settings.promptEnhance.description":
+    "Rewrite the draft with a dedicated model before sending. When disabled, the composer shows no entry.",
+  "settings.promptEnhance.enabled": "Enable prompt enhance",
+  "settings.promptEnhance.enabledDescription":
+    "When enabled, an enhance button appears left of the send button.",
+  "settings.promptEnhance.model": "Enhance model",
+  "settings.promptEnhance.model.placeholder": "Select model",
+  "settings.promptEnhance.reasoning": "Reasoning level",
+  "settings.promptEnhance.reasoningHint": "No default level; you must choose one.",
+  "settings.promptEnhance.maxOutputTokens": "Max output tokens",
+  "settings.promptEnhance.maxOutputTokensHint":
+    "Defaults to 5000 and cannot exceed the selected model's limit.",
+  "settings.promptEnhance.incomplete":
+    "Select a model and reasoning level, otherwise the enhance entry stays disabled.",
+  "settings.promptEnhance.save": "Save",
+  "settings.promptEnhance.saved": "Prompt enhance settings saved",
+  "settings.promptEnhance.saveFailed": "Failed to save prompt enhance settings",
+  "settings.promptEnhance.unsavedChanges": "Unsaved changes",
   "settings.modelProvider.add": "Add provider",
   "settings.modelProvider.createCustomProvider": "Create custom provider",
   "settings.modelProvider.templateCreateFailed":
@@ -5714,6 +5734,10 @@ const enUS: Record<string, string> = {
   "chat.promptEnhance.cancelDescription": "Click again to cancel the current prompt enhancement.",
   "chat.promptEnhance.cancelled": "Cancelled prompt enhancement",
   "chat.promptEnhance.empty": "Type a prompt before enhancing it",
+  "chat.promptEnhance.notConfigured":
+    "Configure prompt enhance first in Settings > Model settings > Prompt enhance",
+  "chat.promptEnhance.structuredDraft":
+    "Drafts with attachments or slash commands cannot be enhanced",
   "chat.promptEnhance.unsupported":
     "The selected model does not currently expose a direct enhancement configuration.",
   "chat.promptEnhance.error": "Prompt enhancement failed. Please try again.",

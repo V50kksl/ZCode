@@ -26,6 +26,7 @@ import {
   type ModelProviderNavItem,
 } from "./constants.js";
 import { InlineEditableProviderCard } from "./InlineEditableProviderCard.js";
+import { PromptEnhanceSettingsPanel } from "@/settings/PromptEnhanceSettingsPanel.js";
 import {
   ModelProviderLoadingCard,
   PresetProviderPlaceholderCard,
@@ -394,6 +395,11 @@ export function ModelProviderSectionDetail({
 
   if (!selectedNavItem) {
     return <ModelProviderLoadingCard loadingLabel={loadingLabel} />;
+  }
+
+  // 提示词增强是功能入口，不是 provider 详情：借同一导航位置，但渲染独立面板。
+  if (selectedNavItem.type === "promptEnhance") {
+    return <PromptEnhanceSettingsPanel />;
   }
 
   if (selectedNavItem.type === "preset") {

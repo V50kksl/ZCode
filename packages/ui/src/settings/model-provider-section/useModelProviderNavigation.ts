@@ -17,6 +17,7 @@ import {
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
   CODING_PLAN_PROVIDER_SPECS,
+  PROMPT_ENHANCE_NAV_KEY,
   type CodingPlanEntitlementState,
   type ModelProviderNavGroup,
   type PresetProviderSpec,
@@ -208,6 +209,12 @@ export function useModelProviderNavigation({
             };
           }),
           ...codingPlanItems.filter((item) => isStartPlanModelProviderId(item.presetId)),
+          // 功能入口排在预置供应商之后、自定义供应商分组之前（见导航截图位置）。
+          {
+            key: PROMPT_ENHANCE_NAV_KEY,
+            type: "promptEnhance" as const,
+            label: intl.formatMessage({ id: "settings.promptEnhance.navLabel" }),
+          },
         ],
       },
       {
@@ -558,7 +565,8 @@ export function connectionSelectionMatchesNavigationItem(
   selection: ProviderFamilyConnectionSelection,
   item: Exclude<ModelProviderNavGroup["items"][number], { type: "codingPlanLoading" }>,
 ): boolean {
-  if (item.type === "custom") return false;
+  // 功能入口与自定义供应商都不属于任何 provider family，不参与连接方式匹配。
+  if (item.type === "custom" || item.type === "promptEnhance") return false;
   const familySpec = resolveModelProviderFamilySpecByProviderId(item.presetId ?? "");
   if (familySpec?.id !== family) return false;
   if (selection.kind === "start-plan") {

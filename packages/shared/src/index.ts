@@ -363,6 +363,8 @@ export {
 export * from "./conversationSelection.js";
 export * from "./attachment-source.js";
 
+export * from "./prompt-enhance.js";
+
 export * from "./channel-mention.js";
 
 export {

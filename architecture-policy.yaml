@@ -747,6 +747,14 @@ global:
   acceptedUpstreamSnapshot: scripts/architecture/upstream-snapshot.json
 
 exceptions:
+  - id: prompt-enhance-entry-unmanaged-new-files
+    rule: unmanaged-new-file
+    paths:
+      - packages/shared/src/prompt-enhance.ts
+      - packages/ui/src/hooks/usePromptEnhance.ts
+      - packages/ui/src/settings/PromptEnhanceSettingsPanel.tsx
+      - packages/ui/src/v4/ComposerPromptEnhanceButton.tsx
+    reason: 提示词增强按仓库既有分层落在 shared 提示词构造、ui hooks 与 settings/v4 组件中（docs/prompt-enhance.md）；只复用 workspace/generateText 通道与现有设置存储，不新增跨模块契约，接管 shared/ui 整包不在本次范围内。
   - id: side-pane-full-view-shortcut-command-edit
     rule: unmanaged-new-file
     paths: [packages/shared/src/shortcutCommands.ts]

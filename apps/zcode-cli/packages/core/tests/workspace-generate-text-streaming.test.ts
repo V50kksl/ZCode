@@ -277,4 +277,40 @@ describe("workspace generateText streaming aggregation", () => {
     expect(result.text).toBe("fix: commit message");
     expect(boundOptions).toEqual({ maxOutputTokens: 5_000, reasoningLevel: "disabled" });
   });
+
+  it("aggregates streamText into a single result for prompt enhance querySource", async () => {
+    let streamCalled = false;
+    async function* events() {
+      yield { type: "start" };
+      yield { type: "text_delta", text: "优化后的" };
+      yield { type: "text_delta", text: "提示词" };
+      yield {
+        type: "finish",
+        finishReason: "stop",
+        usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 },
+      };
+    }
+    const model = createStreamingModel({ streamEvents: events() });
+    model.streamText = ((request: ModelRequest) => {
+      void request;
+      streamCalled = true;
+      return events();
+    }) as never;
+    model.generateText = async () => {
+      throw new Error("generateText should not be called for prompt_enhance");
+    };
+    const runtime = createRuntimeWithModel(model);
+
+    const result = await runtime.generateWorkspaceText({
+      selection: { providerId: "test-provider", modelId: "glm-test" },
+      prompt: "原始提示词",
+      querySource: "prompt_enhance",
+      maxOutputTokens: 5000,
+    });
+
+    expect(streamCalled).toBe(true);
+    expect(result.text).toBe("优化后的提示词");
+    expect(result.finishReason).toBe("stop");
+    expect(result.usage?.totalTokens).toBe(15);
+  });
 });

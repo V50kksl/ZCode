@@ -92,6 +92,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog.js";
 import { Spinner } from "@/components/ui/spinner.js";
+import { ComposerPromptEnhanceButton } from "@/v4/ComposerPromptEnhanceButton.js";
 import { ImagePreviewDialog } from "@/components/ai-elements/image-preview-dialog.js";
 import {
   ChatMediaAttachmentPreviewDialog,
@@ -451,6 +452,8 @@ export interface ConversationComposerProps {
   autoFocusEnabled?: boolean;
   /** 当前 composer 是否运行在手机 Web 远控壳中。 */
   isWebRemoteControl?: boolean;
+  /** 桌面端标识；提示词增强等仅桌面能力据此渲染。 */
+  isDesktop?: boolean;
   workspacePath: string;
   workspaceIdentity?: string;
   remoteSessionId?: string;
@@ -568,6 +571,7 @@ function ConversationComposerImpl({
   onHighspeedActivationApplied,
   autoFocusEnabled = true,
   isWebRemoteControl = false,
+  isDesktop = false,
   workspacePath,
   workspaceIdentity,
   remoteSessionId,
@@ -1750,6 +1754,21 @@ function ConversationComposerImpl({
     [conversationTelemetry, scheduleDraftPersist, updateComposerContent, updateText],
   );
 
+  const handleApplyEnhancedText = useCallback(
+    (enhanced: string) => {
+      inputApiRef.current?.setText(enhanced);
+      inputApiRef.current?.focus();
+      updateText(enhanced);
+      updateComposerContent({
+        text: enhanced,
+        editorStateJson: undefined,
+        mention: undefined,
+      });
+      scheduleDraftPersist();
+    },
+    [scheduleDraftPersist, updateComposerContent, updateText],
+  );
+
   const handleEditorFocus = useCallback(() => {
     conversationTelemetry?.recordComposerFocus();
     // 程序性聚焦不算「点击输入框」；标记一次性消费，之后的手动 focus 照常上报。
@@ -2383,6 +2402,18 @@ function ConversationComposerImpl({
             />
           </span>
         ) : null}
+        {isDesktop ? (
+          <ComposerPromptEnhanceButton
+            workspacePath={workspacePath}
+            workspaceIdentity={workspaceIdentity}
+            modelSelectionView={modelSelectionView}
+            currentText={text}
+            onApplyText={handleApplyEnhancedText}
+            blocked={
+              attachmentsApi.attachments.length > 0 || text.trimStart().startsWith("/")
+            }
+          />
+        ) : null}
         {showStopControl ? (
           <ControlHintTooltip title={stopTooltipTitle} shortcut="Esc">
             <Button
@@ -2437,6 +2468,7 @@ function ConversationComposerImpl({
       highspeedPresented,
       highspeedSweepActive,
       isWebRemoteControl,
+      isDesktop,
       mode,
       handleSelectModelTrace,
       modelSelectionReload,
@@ -2459,6 +2491,9 @@ function ConversationComposerImpl({
       sessionId,
       showStopControl,
       stopTooltipTitle,
+      text,
+      handleApplyEnhancedText,
+      attachmentsApi.attachments.length,
       workspaceIdentity,
       workspacePath,
     ],

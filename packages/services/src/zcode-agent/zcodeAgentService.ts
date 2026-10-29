@@ -207,6 +207,7 @@ import type {
   ZCodeAgentCreateSessionParams,
   ZCodeAgentInstallPluginParams,
   ZCodeAgentGenerateWorkspaceTextParams,
+  ZCodeAgentCancelGenerateWorkspaceTextParams,
   ZCodeAgentTestModelConnectivityParams,
   ZCodeAgentGoalParams,
   ZCodeAgentGrantWorkspaceHookTrustParams,
@@ -5243,7 +5244,9 @@ export function createZCodeAgentService(
         workspace: params,
         refreshRegistry: true,
       });
-      const operationId = params.signal ? randomUUID() : undefined;
+      // 进程内调用方可传 AbortSignal；renderer 经服务代理调用时 signal 会被结构化克隆成
+      // 普通对象，必须改用它生成的 operationId，并在取消时调用 cancelGenerateWorkspaceText。
+      const operationId = params.operationId ?? (params.signal ? randomUUID() : undefined);
       const cancel = () => {
         if (!operationId) return;
         void client
@@ -5289,6 +5292,25 @@ export function createZCodeAgentService(
       } finally {
         params.signal?.removeEventListener("abort", cancel);
       }
+    },
+
+    async cancelGenerateWorkspaceText(params: ZCodeAgentCancelGenerateWorkspaceTextParams) {
+      const client = await getClient(params);
+      // 取消是 best-effort 控制面操作：失败只记录 debug，不覆盖调用方已经发生的取消语义。
+      await client
+        .request(
+          zcodeProtocolMethods.workspaceCancelGenerateText,
+          { operationId: params.operationId },
+          zcodeWorkspaceCancelGenerateTextResultSchema,
+          { timeoutMs: 5_000 },
+        )
+        .catch((error: unknown) => {
+          logger.debug(undefined, "workspace 模型请求取消通知失败", {
+            operationId: params.operationId,
+            workspaceKey: resolveWorkspaceKey(params),
+            error: error instanceof Error ? error.message : String(error),
+          });
+        });
     },
 
     async testModelConnectivity(params: ZCodeAgentTestModelConnectivityParams) {

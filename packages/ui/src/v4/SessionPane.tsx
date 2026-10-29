@@ -5440,6 +5440,7 @@ export function SessionPane({
         quotaBanner.state.blocksSubmit
       }
       isWebRemoteControl={compactForRemoteControl}
+      isDesktop={isDesktop}
       workspacePath={workspacePath}
       workspaceIdentity={workspaceIdentity}
       remoteSessionId={remoteSessionId ?? undefined}

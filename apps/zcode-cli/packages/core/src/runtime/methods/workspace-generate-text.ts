@@ -8,6 +8,7 @@ import type {
   ModelInputMessage,
   ModelSelection,
   ModelRequest,
+  ModelStreamEvent,
   ModelToolCall,
   ModelToolContract,
   ModelUsage,
@@ -15,6 +16,7 @@ import type {
   TraceContext,
 } from "../deps.js";
 import type { AgentRuntimeInternal } from "../internal.js";
+import type { RuntimeModelTextResult } from "../types.js";
 import { createRefreshRuntimeHeadersBeforeModelAttempt } from "./model-runtime-headers.js";
 import { recordModelUsageFact } from "./usage-observability.js";
 import { createRuntimeModel } from "./runtime-model.js";
@@ -214,7 +216,12 @@ async function generateWorkspaceTextImpl(
         traceContext: modelTraceContext,
       }),
     },
-    () => model.generateText(modelRequest),
+    // 提示词增强等通用生成请求：部分第三方 OpenAI-compatible 聚合网关在非流式下返回 SSE 流或非标 JSON，
+    // 导致 AI SDK generateText 报 Invalid JSON response（见 subagent.ts、websearch.ts）。
+    // 改用 streamText 并在内部聚合结果，对上层保持单次返回契约，彻底兼容各类中转端点。
+    querySource === GIT_COMMIT_MESSAGE_QUERY_SOURCE
+      ? () => model.generateText(modelRequest)
+      : () => collectWorkspaceStreamResult(model.streamText(modelRequest)),
   ).catch(async (error: unknown) => {
     await recordModelUsageFact(this, {
       error,
@@ -272,4 +279,47 @@ function assertWorkspaceModelInput(input: WorkspaceGenerateTextInput): void {
   if (input.messages && input.messages.length > 0) return;
   if (input.prompt?.trim()) return;
   throw new Error("模型文本生成 prompt 或 messages 不能为空");
+}
+
+/**
+ * 聚合流式事件为一次性文本结果。
+ *
+ * 部分第三方 OpenAI-compatible 聚合网关在非流式 HTTP 请求下会强制返回 SSE 流或非标 JSON，
+ * 导致底层 AI SDK 报 Invalid JSON response（见 subagent.ts、websearch.ts）。
+ * 走 streamText 并在内部收集聚合，可抹平中转端点的协议缺陷，同时对上层保持一次性交付。
+ */
+async function collectWorkspaceStreamResult(
+  stream: AsyncIterable<ModelStreamEvent>,
+): Promise<RuntimeModelTextResult> {
+  let text = "";
+  let finishReason = "unknown";
+  let providerMetadata: Record<string, unknown> | undefined;
+  let usage: ModelUsage = {};
+  const toolCalls: ModelToolCall[] = [];
+
+  for await (const event of stream) {
+    switch (event.type) {
+      case "text_delta":
+        text += event.text;
+        break;
+      case "tool_call":
+        toolCalls.push(event.toolCall);
+        break;
+      case "finish":
+        finishReason = event.finishReason;
+        usage = event.usage;
+        providerMetadata = event.providerMetadata;
+        break;
+      case "error":
+        throw normalizeStreamError(event.error);
+    }
+  }
+
+  return {
+    finishReason,
+    providerMetadata,
+    text,
+    toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+    usage,
+  };
 }

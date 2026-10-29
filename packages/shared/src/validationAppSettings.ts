@@ -13,6 +13,7 @@ import {
   embeddedBrowserViewportPreferenceSchema,
 } from "./browser-use/command-metadata.js";
 import { providerFamilyConnectionSelectionSettingsSchema } from "./provider-family-connection-selection.js";
+import { modelSelectionSchema } from "./model-selection.js";
 import {
   connectionProfileSchema,
   sourceServerRecordSchema,
@@ -574,6 +575,10 @@ const appSettingsObjectSchema = z.object({
   pendingPostUpdateReleaseNotes: postUpdateReleaseNotesPayloadSchema.optional(),
   receivePreviewUpdates: z.boolean().default(false),
   autoDownloadAndInstallUpdates: z.boolean().default(false),
+  // 提示词增强：关闭时不渲染输入框入口，也不读取模型配置。
+  promptEnhanceEnabled: z.boolean().default(false),
+  promptEnhanceModel: modelSelectionSchema.optional(),
+  promptEnhanceMaxOutputTokens: z.number().int().positive().default(5000),
   skippedElectronUpdateVersions: skippedElectronUpdateVersionsSchema,
   settingsSyncFirstRunPromptHandled: z.boolean().optional(),
   webRemoteControlRelayV2Device: webRemoteControlRelayV2DeviceSchema.optional(),
@@ -684,6 +689,9 @@ export const appSettingsPatchSchema = z.object({
   pendingPostUpdateReleaseNotes: postUpdateReleaseNotesPayloadSchema.optional(),
   receivePreviewUpdates: z.boolean().optional(),
   autoDownloadAndInstallUpdates: z.boolean().optional(),
+  promptEnhanceEnabled: z.boolean().optional(),
+  promptEnhanceModel: modelSelectionSchema.optional(),
+  promptEnhanceMaxOutputTokens: z.number().int().positive().optional(),
   skippedElectronUpdateVersions: z
     .partialRecord(electronReleaseChannelSchema, nonEmptyStringSchema)
     .optional(),

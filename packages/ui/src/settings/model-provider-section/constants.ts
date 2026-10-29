@@ -213,6 +213,15 @@ export type ModelProviderNavItem =
       oauthProviderId?: OAuthProviderId;
     }
   | {
+      /**
+       * 「提示词增强」是功能入口而非模型供应商：它不参与 provider 重命名、排序、
+       * 连接方式与状态点，只借用模型设置页的导航位置（自定义供应商分组之前）。
+       */
+      key: string;
+      type: "promptEnhance";
+      label: string;
+    }
+  | {
       key: string;
       type: "custom";
       label: string;
@@ -221,6 +230,9 @@ export type ModelProviderNavItem =
     };
 
 export type ModelProviderNavGroupId = "preset" | "custom";
+
+/** 「提示词增强」功能入口的固定导航 key；不参与 provider 身份与排序。 */
+export const PROMPT_ENHANCE_NAV_KEY = "prompt-enhance";
 
 export interface ModelProviderNavGroup {
   id: ModelProviderNavGroupId;
